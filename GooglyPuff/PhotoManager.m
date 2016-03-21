@@ -11,21 +11,27 @@
 
 @interface PhotoManager ()
 @property (nonatomic, strong) NSMutableArray *photosArray;
+//---Add begin----
+@property (nonatomic, strong) dispatch_queue_t concurrentPhotoQueue;
+//---Add end ---
 @end
 
 @implementation PhotoManager
-/*
+
 + (instancetype)sharedManager
 {
     static PhotoManager *sharedPhotoManager = nil;
-    if (!sharedPhotoManager) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         sharedPhotoManager = [[PhotoManager alloc] init];
         sharedPhotoManager->_photosArray = [NSMutableArray array];
-    }
+        //
+        sharedPhotoManager->_concurrentPhotoQueue = dispatch_queue_create("com.selander.GooglyPuff.photoQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
 
     return sharedPhotoManager;
 }
-*/
+/*
 //强制竞争条件发生
 + (instancetype)sharedManager
 {
@@ -41,23 +47,31 @@
     
     return sharedPhotoManager;
 }
-
+*/
 //*****************************************************************************/
 #pragma mark - Unsafe Setter/Getters
 //*****************************************************************************/
 
 - (NSArray *)photos
 {
-    return _photosArray;
+    __block NSArray *array;
+    dispatch_sync(self.concurrentPhotoQueue, ^{
+        array = [NSArray arrayWithArray:_photosArray];
+    });
+    return array;
 }
 
 - (void)addPhoto:(Photo *)photo
 {
     if (photo) {
-        [_photosArray addObject:photo];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self postContentAddedNotification];
+        //use dispatch_barrier_async
+        dispatch_barrier_async(self.concurrentPhotoQueue, ^{
+            [_photosArray addObject:photo];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self postContentAddedNotification];
+            });
         });
+
     }
 }
 
