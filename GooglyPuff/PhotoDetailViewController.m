@@ -37,9 +37,16 @@ const CGFloat kFaceBoundsToEyeScaleFactor = 4.0f;
         _image.size.width <= self.photoImageView.bounds.size.width) {
         [self.photoImageView setContentMode:UIViewContentModeCenter];
     }
+    //use concurrency thread finish some task.
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        UIImage *overlayImage = [self faceOverlayImageFromImage:_image];
+        //use main thread update UI
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self fadeInNewImage:overlayImage];
+        });
+    });
     
-    UIImage *overlayImage = [self faceOverlayImageFromImage:_image];
-    [self fadeInNewImage:overlayImage];
+                   
 }
 
 //*****************************************************************************/
