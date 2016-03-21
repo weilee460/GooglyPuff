@@ -14,7 +14,7 @@
 @end
 
 @implementation PhotoManager
-
+/*
 + (instancetype)sharedManager
 {
     static PhotoManager *sharedPhotoManager = nil;
@@ -23,6 +23,22 @@
         sharedPhotoManager->_photosArray = [NSMutableArray array];
     }
 
+    return sharedPhotoManager;
+}
+*/
+//强制竞争条件发生
++ (instancetype)sharedManager
+{
+    static PhotoManager *sharedPhotoManager = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [NSThread sleepForTimeInterval:2];
+        sharedPhotoManager = [[PhotoManager alloc] init];
+        NSLog(@"Singleton has memory address at: %@", sharedPhotoManager);
+        [NSThread sleepForTimeInterval:2];
+        sharedPhotoManager->_photosArray = [NSMutableArray array];
+    });
+    
     return sharedPhotoManager;
 }
 

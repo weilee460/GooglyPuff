@@ -12,6 +12,15 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    //强制竞态条件发生   --- start  ----
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        [PhotoManager sharedManager];
+    });
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        [PhotoManager sharedManager];
+    });
+    // --- end ---
     [[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
     return YES;
 }
